@@ -27,6 +27,19 @@ def save_user_data():
 # Initialize user data from the file
 user_data = load_user_data()
 
+# Function to find leaderboard by looping through userdata, while sorting from smallest to largest average guesses.
+def find_avg(user_data):
+    leaderboard = []
+    counter = 1
+    sorted_data = dict(sorted(user_data.items(), key=lambda item: item[1]['user_avg']))
+    for key, value in sorted_data.items():
+        username = value['name']
+        avg = value['user_avg']
+        msg = f"{counter}. {username} ({avg})"
+        leaderboard.append(msg)
+        counter += 1
+    return "\n".join(leaderboard)
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -78,12 +91,9 @@ async def myscore(ctx, user: discord.User = None):
 
 @bot.command()
 async def avg(ctx, user: discord.User = None):
-    #LOOP through user_data, get [user.id][user_avg], add to leaderboard variable, ctx.send leaderboard
-    user = user or ctx.author 
-    if str(user.id) in user_data:
-        average_guesses = sum(user_data[str(user.id)]['guesses']) / len(user_data[str(user.id)]['guesses']) 
-        await ctx.send(f"Rankings by average number of guesses: {average_guesses:.2f}")
-    else:
-        await ctx.send(f"No data for {user.name} yet.")
+    """!avg use this bot command to find average number of guesses and display the leaderboard."""
+    user = user or ctx.author
+    leaderboard = find_avg(user_data)
+    await ctx.send(f"Rankings by average number of guesses:\n{leaderboard}")
 
 bot.run('Your bot token')
