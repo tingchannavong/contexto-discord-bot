@@ -1,15 +1,31 @@
-# A discord app to collect Contexto game information and store it.
-
+# A discord app to collect Contexto game statistics from users, store it as json file and create a leaderboard. Also Deletemydata, take inspiration from function of wordle bot.
 import discord
 from discord.ext import commands
+import json
+import os
+
+# File path for the JSON file
+DATA_FILE = "user_data.json"
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Dictionary to store users and their guesses
-user_data = {}
+# Load user data from JSON file if it exists
+def load_user_data():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as file:
+            return json.load(file)
+    return {}
+
+# Save user data to JSON file
+def save_user_data():
+    with open(DATA_FILE, "w") as file:
+        json.dump(user_data, file, indent=4)
+
+# Initialize user data from the file
+user_data = load_user_data()
 
 @bot.event
 async def on_ready():
@@ -20,23 +36,28 @@ async def on_message(message):
     if message.author == bot.user:
         return
 
-    # Example message format to capture: "I played contexto.me #715 and got it in 24 guesses."
     if "played contexto.me" in message.content.lower():
         try:
-            # Extracting the number of guesses from the message
-            guesses = int(message.content.split("and got it in")[1].split("guesses")[0].strip())
+            guesses = int(message.content.split("and got it in")[1].split("guesses")[0].strip()) #This parsing needs more variety for 100 with hints etc.
             user = message.author
 
-            # Log user guesses
-            if user.id in user_data:
-                user_data[user.id]['guesses'].append(guesses)
+            if str(user.id) in user_data:
+                user_data[str(user.id)]['guesses'].append(guesses)
+                #logging
+                print(user_data)
             else:
-                user_data[user.id] = {'name': user.name, 'guesses': [guesses]}
+                user_data[str(user.id)] = {'name': user.name, 'guesses': [guesses]}
 
-            # Calculate the average guesses
-            average_guesses = sum(user_data[user.id]['guesses']) / len(user_data[user.id]['guesses'])
+            average_guesses = sum(user_data[str(user.id)]['guesses']) / len(user_data[str(user.id)]['guesses'])
 
-            # Send a message with the updated average
+            # Update each user average guess
+            user_data[str(user.id)]['user_avg'] = average_guesses
+
+            save_user_data()  # Save data after each update
+            
+            #LOGGING
+            print(user_data)
+
             await message.channel.send(
                 f"{user.name}, your average guesses so far: {average_guesses:.2f}"
             )
@@ -47,16 +68,22 @@ async def on_message(message):
     await bot.process_commands(message)
 
 @bot.command()
-async def avg(ctx, user: discord.User = None):
-    """Command to check the average guesses for a specific user."""
-    user = user or ctx.author  # Default to the message author if no user is specified
-    if user.id in user_data:
-        average_guesses = sum(user_data[user.id]['guesses']) / len(user_data[user.id]['guesses'])
+async def myscore(ctx, user: discord.User = None): 
+    user = user or ctx.author 
+    if str(user.id) in user_data:
+        average_guesses = sum(user_data[str(user.id)]['guesses']) / len(user_data[str(user.id)]['guesses']) 
         await ctx.send(f"{user.name}'s average guesses: {average_guesses:.2f}")
     else:
         await ctx.send(f"No data for {user.name} yet.")
 
-# Replace 'YOUR_BOT_TOKEN' with your actual bot token
-bot.run('YOUR_BOT_TOKEN')
+@bot.command()
+async def avg(ctx, user: discord.User = None):
+    #LOOP through user_data, get [user.id][user_avg], add to leaderboard variable, ctx.send leaderboard
+    user = user or ctx.author 
+    if str(user.id) in user_data:
+        average_guesses = sum(user_data[str(user.id)]['guesses']) / len(user_data[str(user.id)]['guesses']) 
+        await ctx.send(f"Rankings by average number of guesses: {average_guesses:.2f}")
+    else:
+        await ctx.send(f"No data for {user.name} yet.")
 
-
+bot.run('Your bot token')
