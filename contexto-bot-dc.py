@@ -1,6 +1,6 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data, . Take inspiration from function of wordle bot. 
-# New: -take hints into account -switch case: customize msgs based on guess no. today, clear all function, helpme
-# To-do:-take the colored guess & data visualize pie chart avg?
+# To-do: find place to host bot 
+# -take the colored guess & data visualize pie chart avg?
 
 import discord
 from discord.ext import commands
@@ -71,6 +71,7 @@ def get_custom_message(guesses_count):
     else:
         return "Wow, you are god-like!"
 
+#MAIN COMMANDS
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -82,6 +83,7 @@ async def on_message(message):
 
     if "played contexto.me" in message.content.lower():
         try:
+            print(message.content)
             # Handle contexto guesses
             guesses = int(message.content.split("and got it in")[1].split("guesses")[0].strip()) 
             user = message.author
