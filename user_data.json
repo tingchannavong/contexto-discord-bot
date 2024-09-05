@@ -4,13 +4,8 @@
         "guesses": [
             12
         ],
+        "hints": [],
+        "avg_hints": 0,
         "user_avg": 12.0
-    },
-    "373052955949268992": {
-        "name": "kcnkvs",
-        "guesses": [
-            31
-        ],
-        "user_avg": 31.0
     }
 }

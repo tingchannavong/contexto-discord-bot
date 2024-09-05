@@ -1,6 +1,6 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data, . Take inspiration from function of wordle bot. 
-# To-do: -take hints into account -switch case: customize msgs based on guess no. today  
-# -take the colored guess & data visualize pie chart avg?
+# New: -take hints into account -switch case: customize msgs based on guess no. today, clear all function, helpme
+# To-do:-take the colored guess & data visualize pie chart avg?
 
 import discord
 from discord.ext import commands
@@ -40,6 +40,11 @@ def calc_avg_hint(user):
     average_hints = sum(user_data[str(user.id)]['hints']) / len(user_data[str(user.id)]['hints'])
     return average_hints
 
+def count_game_no(user):
+    """Takes a discord user id and calculate number of games played."""
+    games_played = len(user_data[str(user.id)]['guesses'])
+    return games_played 
+
 # Function to find leaderboard by looping through userdata, while sorting from smallest to largest average guesses.
 def make_leaderboard(user_data):
     leaderboard = []
@@ -48,12 +53,12 @@ def make_leaderboard(user_data):
     for key, value in sorted_data.items():
         username = value['name']
         avg = value['user_avg']
-        msg = f"{counter}. {username} ({avg})"
+        avg_hints = value['avg_hints']
+        msg = f"{counter}. {username} ({avg}) and uses ({avg_hints}) hints."
         leaderboard.append(msg)
         counter += 1
     return "\n".join(leaderboard)
 
-# Function to determine switch case
 def get_custom_message(guesses_count):
     if guesses_count > 100:
         return "Yer had a good run~"
@@ -81,35 +86,30 @@ async def on_message(message):
             guesses = int(message.content.split("and got it in")[1].split("guesses")[0].strip()) 
             user = message.author
 
-            if str(user.id) in user_data:
-                user_data[str(user.id)]['guesses'].append(guesses)
-            else:
-                user_data[str(user.id)] = {'name': user.name, 'guesses': [guesses]}
+            # Initialize user data if not exists
+            if str(user.id) not in user_data:
+                user_data[str(user.id)] = {'name': user.name, 'guesses': [], 'hints': [], 'avg_hints': 0}
+
+            user_data[str(user.id)]['guesses'].append(guesses)
 
             average_guesses = calc_avg_guess(user)
-
             user_data[str(user.id)]['user_avg'] = average_guesses  # Update each user average guess
 
-            save_user_data()  # Save data after each update
-            # I want to send a customize message based on number of guesses
-            await message.channel.send(f"{user.name}, Good job!")
-
-            # Handle contexto hints
+                # Handle contexto hints
             if "hints" in message.content.lower():
-                hints = int(message.split("guesses and")[1].split("hints")[0])
-                if str(user.id) in user_data:
+                hints = int(message.content.split("guesses and")[1].split("hint")[0])
+                if 'hints' in user_data[str(user.id)]:
                     user_data[str(user.id)]['hints'].append(hints)
                 else:
                     user_data[str(user.id)] = {'name': user.name, 'hints': [hints]}
 
                 average_hints = calc_avg_hint(user) 
                 user_data[str(user.id)]['avg_hints'] = average_hints # Update each user average hint
-                save_user_data()  # Save data after each update
-            else:
-                pass
+
+            save_user_data()  # Save data after each update
 
             # I want to send a customize message based on number of guesses
-            await message.channel.send(get_custom_message(user_data[str(user.id)]['user_avg']))
+            await message.channel.send(get_custom_message(guesses))
 
         except (ValueError, IndexError):
             await message.channel.send("I couldn't parse your guesses. Please make sure your message is in the correct format.")
@@ -121,9 +121,10 @@ async def myscore(ctx, user: discord.User = None):
     user = user or ctx.author 
     if str(user.id) in user_data:
         average_guesses = calc_avg_guess(user)
-        if user_data[str(user.id)]['hints'] in user_data:
+        games_played = count_game_no(user)
+        if 'hints' in user_data[str(user.id)]:
             average_hints = calc_avg_hint(user)
-            await ctx.send(f"{user.name}'s average guesses: {average_guesses:.2f} and hints: {average_hints}..")
+            await ctx.send(f"{user.name} played {games_played} games with average guesses: {average_guesses:.2f} and used hints: {average_hints}")
         else:
             await ctx.send(f"{user.name}'s average guesses: {average_guesses:.2f}.")
     else:
@@ -141,7 +142,7 @@ async def avg(ctx, user: discord.User = None):
 
 @bot.command()
 async def deletemydata(ctx, user: discord.User = None):
-    """!deletemydata use this bot command to delete all user data."""
+    """!deletemydata use this bot command to delete your specific user data."""
     user = user or ctx.author
     try:    
         if str(user.id) in user_data:
@@ -150,5 +151,23 @@ async def deletemydata(ctx, user: discord.User = None):
             await ctx.send(f"Data for {user.name} has been deleted.")
     except KeyError:
         await ctx.send(f"No data for {user.name}.")
-   
+
+@bot.command()
+async def clearall(ctx, user: discord.User = None):
+    """!clearall use this bot command to delete all users data."""
+    user = user or ctx.author
+    user_data.clear()
+    save_user_data()
+    await ctx.send(f"All users' data has been deleted.")
+
+@bot.command()
+async def helpme(ctx, user: discord.User = None):
+    """!help use this bot command to ask for all available commands."""
+    user = user or ctx.author
+    await ctx.send("""           
+!helpme ~to see this message 
+!myscore ~to see your stats 
+!avg ~to see server rankings by average number of guesses 
+!deletemydata ~to remove all your scores from contexto-bot""")
+
 bot.run('your bot token')
