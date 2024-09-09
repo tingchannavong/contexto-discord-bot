@@ -2,15 +2,10 @@
     "762662833094656011": {
         "name": "nimingdehaoyou_agf",
         "guesses": [
-            41,
-            88,
-            5
-        ]
-    },
-    "373052955949268992": {
-        "name": "kcnkvs",
-        "guesses": [
-            70
-        ]
+            12
+        ],
+        "hints": [],
+        "avg_hints": 0,
+        "user_avg": 12.0
     }
 }
