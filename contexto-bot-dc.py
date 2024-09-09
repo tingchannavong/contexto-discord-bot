@@ -1,6 +1,6 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data, . Take inspiration from function of wordle bot. 
-# To-do: find place to host bot 
-# -take the colored guess & data visualize pie chart avg?
+# To-do: -contexto gave up case 
+# -take the colored guess & data visualize pie chart avg
 
 import discord
 from discord.ext import commands
@@ -83,7 +83,6 @@ async def on_message(message):
 
     if "played contexto.me" in message.content.lower():
         try:
-            print(message.content)
             # Handle contexto guesses
             guesses = int(message.content.split("and got it in")[1].split("guesses")[0].strip()) 
             user = message.author
@@ -97,7 +96,7 @@ async def on_message(message):
             average_guesses = calc_avg_guess(user)
             user_data[str(user.id)]['user_avg'] = average_guesses  # Update each user average guess
 
-                # Handle contexto hints
+            # Handle contexto hints
             if "hints" in message.content.lower():
                 hints = int(message.content.split("guesses and")[1].split("hint")[0])
                 if 'hints' in user_data[str(user.id)]:
@@ -110,7 +109,7 @@ async def on_message(message):
 
             save_user_data()  # Save data after each update
 
-            # I want to send a customize message based on number of guesses
+            # Send a customize message based on number of guesses
             await message.channel.send(get_custom_message(guesses))
 
         except (ValueError, IndexError):
@@ -122,13 +121,10 @@ async def on_message(message):
 async def myscore(ctx, user: discord.User = None): 
     user = user or ctx.author 
     if str(user.id) in user_data:
-        average_guesses = calc_avg_guess(user)
+        average_guesses = calc_avg_guess(user,'guesses')
         games_played = count_game_no(user)
-        if 'hints' in user_data[str(user.id)]:
-            average_hints = calc_avg_hint(user)
+        average_hints = user_data[str(user.id)]['avg_hints']
             await ctx.send(f"{user.name} played {games_played} games with average guesses: {average_guesses:.2f} and used hints: {average_hints}")
-        else:
-            await ctx.send(f"{user.name}'s average guesses: {average_guesses:.2f}.")
     else:
         await ctx.send(f"No data for {user.name} yet.")
 
