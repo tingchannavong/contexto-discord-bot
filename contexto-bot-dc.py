@@ -6,6 +6,10 @@ import discord
 from discord.ext import commands
 import json
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # File path for the JSON file
 DATA_FILE = "user_data.json"
@@ -124,7 +128,7 @@ async def myscore(ctx, user: discord.User = None):
         average_guesses = calc_avg_guess(user,'guesses')
         games_played = count_game_no(user)
         average_hints = user_data[str(user.id)]['avg_hints']
-            await ctx.send(f"{user.name} played {games_played} games with average guesses: {average_guesses:.2f} and used hints: {average_hints}")
+        await ctx.send(f"{user.name} played {games_played} games with average guesses: {average_guesses:.2f} and used hints: {average_hints}")
     else:
         await ctx.send(f"No data for {user.name} yet.")
 
@@ -168,4 +172,4 @@ async def helpme(ctx, user: discord.User = None):
 !avg ~to see server rankings by average number of guesses 
 !deletemydata ~to remove all your scores from contexto-bot""")
 
-bot.run('your bot token')
+bot.run(TOKEN)
