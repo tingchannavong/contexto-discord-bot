@@ -1,3 +1,5 @@
+# Testing file
+
 user_data = {'762662833094656011': {'name': 'name', 'hints': [2], 'user_avg': 12.5, 'avg_hints': 2}, '373052955949268992': {'name': 'kcnkvs', 'guesses': [70, 75], 'user_avg': 72.5, 'avg_hints': 0}}
 
 message = """I played contexto.me #717 and got it in 12 guesses.
