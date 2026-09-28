@@ -1,7 +1,5 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data.
-# To work on guild and servers like worldle bot
-# DONE: -Fixed leaderboard by filter 0 guesses out -take the colored guess & data visualize pie chart avg
-# To-do: divide members by guild/servers like function of wordle bot. 
+# To-do: divide members by guild/servers like function of wordle bot and also public leaderboard. 
 
 import discord
 from discord.ext import commands
@@ -11,6 +9,7 @@ import re
 import plotly.graph_objects as go
 from dotenv import load_dotenv
 
+# maybe delete below
 glob_var_name = 'ct_hint_avg'
 
 load_dotenv()
