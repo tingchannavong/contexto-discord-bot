@@ -15,8 +15,8 @@ glob_var_name = 'ct_hint_avg'
 load_dotenv()
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
-# File path for the JSON file
-DATA_FILE = "user_data.json"
+# File path for the JSON file in docker volumes
+DATA_FILE = "/app/data/user_data.json"
 
 intents = discord.Intents.default()
 intents.message_content = True

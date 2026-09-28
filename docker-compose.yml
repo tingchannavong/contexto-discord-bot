@@ -4,3 +4,8 @@ services:
     container_name: contexto_bot
     env_file: .env
     restart: always
+    volumes:
+      - my_user_data:/app/data
+
+volumes:
+  my_user_data
