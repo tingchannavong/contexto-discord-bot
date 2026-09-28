@@ -6,9 +6,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 import json
 import os
-import re
-import plotly.graph_objects as go
-import plotly.express as px
+from visualization import make_pie_chart, extract_last_three_numbers, convert_to_int
+from leaderboard import calc_avg_guess, calc_avg_hint, count_game_no, make_leaderboard, get_custom_message
 
 # To do Make global variables so can change name easier i.e. glob_var_name = 'ct_hint_avg'
 glob_var_name = 'ct_hint_avg'
@@ -38,114 +37,6 @@ def save_user_data():
 
 # Initialize user data from the file
 user_data = load_user_data()
-
-def calc_avg_guess(user, guess_type):
-    """Takes a discord user id, guess type (name of dictionary key for contexto|letroso guesses) and calculate average guess by sum of guesses list/guess number."""
-    average_guesses = sum(user_data[str(user.id)][guess_type]) / len(user_data[str(user.id)][guess_type]) 
-    return average_guesses
-
-def calc_avg_hint(user, hint_type):
-    """Takes a discord user id and calculate average Contexto hints."""
-    average_hints = sum(user_data[str(user.id)][hint_type]) / len(user_data[str(user.id)][hint_type])
-    return average_hints
-
-def count_game_no(user, game_type):
-    """Takes a discord user id and game type (contexto|letroso guesses) and calculate number of games played."""
-    games_played = len(user_data[str(user.id)][game_type])
-    return games_played 
-
-# Function to find leaderboard by looping through userdata, while sorting from smallest to largest average guesses.
-def make_leaderboard(user_data, game_type, hint_type):
-    leaderboard = []
-    counter = 1
-    filtered_data = {k: v for k, v in user_data.items() if v[game_type] != 0}
-    sorted_data = dict(sorted(filtered_data.items(), key=lambda item: item[1][game_type]))
-    for key, value in sorted_data.items():
-        username = value['name']
-        avg = value[game_type]
-        avg_hints = value[hint_type]
-        if game_type == 'ct_avg' or game_type == 'cn_avg':
-            msg = f"{counter}. {username} ({avg}) and uses ({avg_hints}) hints."
-            leaderboard.append(msg)
-        elif game_type == 'lt_avg':
-            msg = f"{counter}. {username} ({avg})"
-            leaderboard.append(msg)
-        counter += 1
-    return "\n".join(leaderboard)
-
-def get_custom_message(guesses_count):
-    if guesses_count > 100:
-        return "Yer had a good run~"
-    elif 75 < guesses_count <= 100:
-        return "Maybe you need more hints..."
-    elif 45 < guesses_count <= 75:
-        return "Good job!"
-    elif 15 < guesses_count <= 45:
-        return "You're performing as well as an AI."
-    elif guesses_count == 1:
-        return "Let's be honest, are you cheating?"
-    else:
-        return "Wow, you are god-like!"
-
-def extract_last_three_numbers(text):
-    """To get contexto averages close, medium, far-off."""
-    # Split the string by periods and get the last part
-    last_part = text.split('.')[-1].strip()
-
-    # Use regular expression to find all numbers (1-3 digits) in the last part
-    numbers = re.findall(r'\b\d{1,3}\b', last_part)
-    # numbers[-3]
-
-    # Return the last three numbers (or fewer if there aren't three)
-    return numbers
-
-def convert_to_int(extracted):
-    new_list = []
-    for i in extracted:
-        converted = int(i)
-        new_list.append(converted)
-    return new_list
-
-def make_pie_chart(user):
-    """Make a pie chart to visualize contexto guesses in 3 categories: close, medium or far-off guesses. Save as png and return the image."""
-    #Create labels and colors"
-    labels = ['Close Guesses', 'Medium Guesses', 'Far Off Guesses']
-    colors = ['#00FF00', '#ADD8E6', '#FF9999']
-
-    #Calculate percentages
-    total = sum(user_data[str(user.id)]['pie_dict'].values())
-    percentage = [f'{(each/total)*100:.1f}%' for each in user_data[str(user.id)]['pie_dict'].values()]
-
-    # Create the pie chart
-    fig = go.Figure(data=[go.Pie(
-        labels=labels,
-        values= list(user_data[str(user.id)]['pie_dict'].values()),
-        textinfo='label+percent',
-        hoverinfo='label+percent+value',
-        marker=dict(colors=colors, line=dict(color='#000000', width=2)),
-        textposition='inside',
-        insidetextorientation='radial'
-    )])
-
-    # Update layout
-    fig.update_layout(
-        title={
-            'text': f"{user_data[str(user.id)]['name']}'s Average Contexto Guesses Visualized",
-            'y':0.95,
-            'x':0.5,
-            'xanchor': 'center',
-            'yanchor': 'top'
-        },
-        showlegend=True,
-        legend_title="Categories",
-        font=dict(size=14)
-    )
-
-    # Save the figure as an image
-    fig.write_image("pie.png")
-
-    # Show the plot
-    fig.show()
 
 #MAIN COMMANDS
 @bot.event
@@ -185,7 +76,7 @@ async def on_message(message):
 
             #Add Today's guess to the list
             user_data[str(user.id)]['guesses'].append(guesses)
-            average_guesses = calc_avg_guess(user, 'guesses')
+            average_guesses = calc_avg_guess(user, 'guesses', user_data)
             user_data[str(user.id)]['ct_avg'] = average_guesses  # Update each user average guess
 
             #Save the guess details for visualization
@@ -205,7 +96,7 @@ async def on_message(message):
                 else:
                     user_data[str(user.id)] = {'name': user.name, 'hints': [hints]}
 
-                average_hints = calc_avg_hint(user,'hints') 
+                average_hints = calc_avg_hint(user, 'hints', user_data) 
                 user_data[str(user.id)]['avg_hints'] = average_hints # Update each user average hint
             else:
                 pass
@@ -232,14 +123,14 @@ async def on_message(message):
            
             #Add Today's guess to the list
             user_data[str(user.id)]['cn_guesses'].append(guesses)
-            average_guesses = calc_avg_guess(user, 'cn_guesses')
+            average_guesses = calc_avg_guess(user, 'cn_guesses', user_data)
             user_data[str(user.id)]['cn_avg'] = average_guesses  # Update each user average guess
 
             # Handle conexo hints
             if "hint" in message.content.lower():
                 hints = int(message.content.split("guesses and")[1].split("hint")[0])
                 user_data[str(user.id)]['cn_hints'].append(hints)
-                average_hints = calc_avg_hint(user,'cn_hints') 
+                average_hints = calc_avg_hint(user, 'cn_hints', user_data) 
                 user_data[str(user.id)]['cn_hints_avg'] = average_hints # Update each user average hint
             else:
                 pass
@@ -265,7 +156,7 @@ async def on_message(message):
                 user_data[str(user.id)] = {'name': user.name, 'guesses': [], 'ct_avg':0, 'hints': [], 'avg_hints': 0, 'lt_guesses':[], 'lt_avg':0, 'cn_guesses':[], 'cn_avg':0, 'cn_hints':[], 'cn_hints_avg':0}
          
             user_data[str(user.id)]['lt_guesses'].append(lt_guesses)
-            lt_avg = calc_avg_guess(user, 'lt_guesses')
+            lt_avg = calc_avg_guess(user, 'lt_guesses', user_data)
             user_data[str(user.id)]['lt_avg'] = lt_avg  # Update each user average guess
 
             save_user_data()  # Save data after each update
@@ -286,16 +177,16 @@ async def myscore(ctx, user: discord.User = None):
     if str(user.id) in user_data:
         #Collect info about Contexto stats for each player
         ct_average = user_data[str(user.id)]['ct_avg'] 
-        ct_games_played = count_game_no(user, 'guesses')
+        ct_games_played = count_game_no(user, 'guesses', user_data)
         average_hints = user_data[str(user.id)]['avg_hints']
 
         #Collect info about Letroso stats for each player
         lt_average = user_data[str(user.id)]['lt_avg'] 
-        lt_games_played = count_game_no(user, 'lt_guesses')
+        lt_games_played = count_game_no(user, 'lt_guesses', user_data)
 
         #Collect info about Conexo stats for each player
         cn_average = user_data[str(user.id)]['cn_avg'] 
-        cn_games_played = count_game_no(user, 'cn_guesses')
+        cn_games_played = count_game_no(user, 'cn_guesses', user_data)
         cn_hints_avg = user_data[str(user.id)]['cn_hints_avg']
 
         await ctx.send(f"""{user.name} scores are:
@@ -361,7 +252,7 @@ async def ctpie(ctx, user: discord.User = None):
     user = user or ctx.author
     try:    
         if str(user.id) in user_data:
-            make_pie_chart(user)
+            make_pie_chart(user, user_data)
      
             # Send the image to Discord
             with open("pie.png", "rb") as f:
