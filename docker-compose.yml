@@ -1,0 +1,6 @@
+services:
+  bot:
+    image: ghcr.io/tingchannavong/contexto-bot:latest
+    container_name: contexto_bot
+    env_file: .env
+    restart: always

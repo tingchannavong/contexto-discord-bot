@@ -9,8 +9,12 @@ import json
 import os
 import re
 import plotly.graph_objects as go
+from dotenv import load_dotenv
 
 glob_var_name = 'ct_hint_avg'
+
+load_dotenv()
+TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 
 # File path for the JSON file
 DATA_FILE = "user_data.json"
@@ -370,4 +374,4 @@ async def helpme(ctx, user: discord.User = None):
         !cnavg ~to see Conexo's server rankings by average number of guesses 
         !deletemydata ~to remove all your scores from this game bot""")
    
-bot.run('your_bot_token')
+bot.run(TOKEN)
