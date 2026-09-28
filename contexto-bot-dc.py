@@ -23,12 +23,18 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Load user data from JSON file if it exists
 def load_user_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as file:
-            return json.load(file)
-    return {}
+    if not os.path.exists(DATA_FILE):
+        default_data = {} 
+        
+        with open(DATA_FILE, 'w') as f:
+            json.dump(default_data, f, indent=4)
+        
+        return default_data
+    
+    # if file exists, read normally 
+    with open(DATA_FILE, "r") as file:
+        return json.load(file)
 
 # Save user data to JSON file
 def save_user_data():
