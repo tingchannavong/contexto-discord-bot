@@ -1,15 +1,16 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data.
-# To-do: divide members by guild/servers like function of wordle bot and also public leaderboard. 
+# To-do: divide members by guild, To work on guild and servers like worldle bot.  and also public leaderboard.  
 
 import discord
 from discord.ext import commands
+from dotenv import load_dotenv
 import json
 import os
 import re
 import plotly.graph_objects as go
-from dotenv import load_dotenv
+import plotly.express as px
 
-# maybe delete below
+# To do Make global variables so can change name easier i.e. glob_var_name = 'ct_hint_avg'
 glob_var_name = 'ct_hint_avg'
 
 load_dotenv()
@@ -106,7 +107,7 @@ def convert_to_int(extracted):
     return new_list
 
 def make_pie_chart(user):
-    """Make a pie chart to visualize contexto guesses in 3 categories: close, medium or far-off guesses."""
+    """Make a pie chart to visualize contexto guesses in 3 categories: close, medium or far-off guesses. Save as png and return the image."""
     #Create labels and colors"
     labels = ['Close Guesses', 'Medium Guesses', 'Far Off Guesses']
     colors = ['#00FF00', '#ADD8E6', '#FF9999']
@@ -140,6 +141,9 @@ def make_pie_chart(user):
         font=dict(size=14)
     )
 
+    # Save the figure as an image
+    fig.write_image("pie.png")
+
     # Show the plot
     fig.show()
 
@@ -162,6 +166,7 @@ async def on_message(message):
 
     # Avoid processing the same message more than once
     if message_id in processed_messages:
+        await message.channel.send("You've already submitted today's score.")
         return
 
     if "played contexto.me" in message.content.lower():
@@ -301,7 +306,7 @@ async def myscore(ctx, user: discord.User = None):
         await ctx.send(f"No data for {user.name} yet.")
 
 @bot.command()
-async def cttavg(ctx, user: discord.User = None):
+async def ctavg(ctx, user: discord.User = None):
     """!ctavg use this bot command to find average number of guesses and display the Contexto leaderboard."""
     user = user or ctx.author
     if user_data == {}:
@@ -311,7 +316,7 @@ async def cttavg(ctx, user: discord.User = None):
         await ctx.send(f"Contexto rankings by average number of guesses:\n{leaderboard}")
 
 @bot.command()
-async def ltsavg(ctx, user: discord.User = None):
+async def ltavg(ctx, user: discord.User = None):
     """!ltavg use this bot command to find average number of guesses and display the Letroso leaderboard."""
     user = user or ctx.author
     if user_data == {}:
@@ -321,7 +326,7 @@ async def ltsavg(ctx, user: discord.User = None):
         await ctx.send(f"Letroso rankings by average number of guesses:\n{leaderboard}")
 
 @bot.command()
-async def cnxavg(ctx, user: discord.User = None):
+async def cnavg(ctx, user: discord.User = None):
     """!cnavg use this bot command to find average number of guesses and display the Conexo leaderboard."""
     user = user or ctx.author
     if user_data == {}:
@@ -351,26 +356,75 @@ async def cleardata(ctx, user: discord.User = None):
     await ctx.send(f"All users' data has been deleted.")
 
 @bot.command()
-async def ctvisual(ctx, user: discord.User = None):
-    """!ctvisual use this bot command to see your Contexto guesses visualized in pie chart."""
+async def ctpie(ctx, user: discord.User = None):
+    """!ctpie - use this bot command to see your Contexto guesses visualized in a pie chart."""
     user = user or ctx.author
     try:    
         if str(user.id) in user_data:
             make_pie_chart(user)
-        await ctx.send(f"Please see your visualized pie chart in another tab.")
+     
+            # Send the image to Discord
+            with open("pie.png", "rb") as f:
+                picture = discord.File(f)
+                await ctx.send("Here is your pie chart:", file=picture)
+
+            # Clean up the image after sending it
+            os.remove("pie.png")
+
     except KeyError:
         await ctx.send(f"No data for {user.name}.")
+
+@bot.command()
+async def invitelink(ctx):
+    """!invitelink use this bot command to generate an OAuth URL to invite the bot with specific permissions."""
+
+    # Set permissions according to the Contexto discord bot's need
+    permissions = discord.Permissions(
+    	create_events=True,
+        create_instant_invite=True,
+        create_expressions=True,
+        create_public_threads=True,
+        create_private_threads=True,
+        view_channel=True,
+        send_messages=True,
+        send_messages_in_threads=True,
+        send_tts_messages=True,  
+        embed_links=True,
+        attach_files=True,
+        read_message_history=True,
+        mention_everyone=True,
+        add_reactions=True,
+        use_external_emojis=True,
+        use_external_stickers=True,
+        use_embedded_activities=True,
+        use_application_commands=True,
+        use_external_apps=True,
+        connect=True,
+        speak=True,
+        request_to_speak=True,
+        use_voice_activation=True,
+        change_nickname=True,
+        use_soundboard=True,
+        use_external_sounds=True,
+    )
+    
+    # Generate OAuth URL with specific permissions
+    oauth_url = discord.utils.oauth_url(bot.user.id, permissions=permissions)
+    
+    # Send the OAuth invite URL in the current channel
+    await ctx.send(f"Invite the contexto bot using this URL: {oauth_url}")
 
 @bot.command()
 async def helpme(ctx, user: discord.User = None):
     """!helpme use this bot command to ask for all available commands."""
     user = user or ctx.author
     await ctx.send("""!helpme ~to see this message 
-        !myscore ~to see your stats 
-        !ctvisual ~to see your Contexto guesses visualized.
+        !myscore ~to see your stats
+        !ctpie ~to see your Contexto's guesses visualized in a pie chart  
         !ctavg ~to see Contexto's server rankings by average number of guesses 
         !ltavg ~to see Letroso's server rankings by average number of guesses 
         !cnavg ~to see Conexo's server rankings by average number of guesses 
-        !deletemydata ~to remove all your scores from this game bot""")
+        !deletemydata ~to remove all your scores from this game bot
+        !invitelink  ~to generate an invite link to this bot""")
    
 bot.run(TOKEN)
