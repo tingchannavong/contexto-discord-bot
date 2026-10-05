@@ -1,8 +1,25 @@
+name: CI/CD
+
 on:
   push:
+    branches: ["**"]
+  pull_request:
     branches: [main]
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: pytest
+
   build-push:
+    needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -17,3 +34,20 @@ jobs:
       - run: | 
           docker build -t ghcr.io/tingchannavong/contexto-bot:latest .
           docker push ghcr.io/tingchannavong/contexto-bot:latest
+  
+  deploy:
+    needs: build-push
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into droplet and redeploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            cd ./contexto-bot
+            docker compose pull
+            docker compose up -d
+        
