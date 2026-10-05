@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 @pytest.mark.asyncio
-@patch("contexto-bot-dc.bot")
+@patch("contexto_bot_dc.bot")
 async def test_on_ready_broadcasts_message(mock_bot):
     # Arrange: Set up mock bot states and guilds
     mock_bot.synced = False
@@ -23,7 +23,7 @@ async def test_on_ready_broadcasts_message(mock_bot):
 
     mock_bot.guilds = [mock_guild]
 
-    from contexto-bot-dc import bot, on_ready
+    from contexto_bot_dc import bot, on_ready
 
     # Act: Run the on_ready event handler
     await on_ready()
