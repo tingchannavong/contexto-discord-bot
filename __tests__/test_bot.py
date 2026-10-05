@@ -6,6 +6,10 @@ import sys
 # Tell Python to look one folder up (the outer folder) for modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+sys.modules['plotly'] = MagicMock()
+sys.modules['plotly.express'] = MagicMock()
+sys.modules['pandas'] = MagicMock()
+
 with patch("builtins.open", mock_open(read_data='{"dummy": "data"}')), \
      patch("os.path.exists", return_value=True):
     from contexto_bot_dc import bot, on_ready
