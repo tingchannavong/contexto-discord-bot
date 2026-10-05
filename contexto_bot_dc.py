@@ -356,4 +356,7 @@ async def helpme(ctx, user: discord.User = None):
         !deletemydata ~to remove all your scores from this game bot
         !invitelink  ~to generate an invite link to this bot""")
    
-bot.run(TOKEN)
+
+
+if __name__ == "__main__":
+    bot.run(TOKEN)
