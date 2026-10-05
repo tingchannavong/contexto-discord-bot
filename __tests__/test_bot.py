@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 sys.modules['plotly'] = MagicMock()
 sys.modules['plotly.express'] = MagicMock()
+sys.modules['plotly.graph_objects'] = MagicMock()
 sys.modules['pandas'] = MagicMock()
 
 with patch("builtins.open", mock_open(read_data='{"dummy": "data"}')), \
