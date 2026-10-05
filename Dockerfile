@@ -9,5 +9,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy bot code
 COPY . .
 
-CMD ["python", "contexto-bot-dc.py"]
+CMD ["python", "contexto_bot_dc.py"]
 
