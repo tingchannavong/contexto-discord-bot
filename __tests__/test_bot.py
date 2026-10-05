@@ -1,5 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+import os
+import sys
+
+# Tell Python to look one folder up (the outer folder) for modules
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 @pytest.mark.asyncio
 @patch("contexto_bot_dc.bot")
