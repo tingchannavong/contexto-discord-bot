@@ -1,3 +1,5 @@
+name: Deploy
+
 on:
   push:
     branches: [main]
@@ -17,3 +19,19 @@ jobs:
       - run: | 
           docker build -t ghcr.io/tingchannavong/contexto-bot:latest .
           docker push ghcr.io/tingchannavong/contexto-bot:latest
+  
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH into droplet and redeploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            cd ./contexto-bot
+            docker compose pull
+            docker compose up -d
+        
