@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r __tests__/requirements-dev.txt
-      - run: pytest __tests__
+      - run: pytest
 
   build-push:
     needs: test

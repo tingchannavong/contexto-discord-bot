@@ -1,5 +1,5 @@
 # A discord app to collect Contexto game statistics from users, store it as json file, create a leaderboard, delete user data.
-# To-do: divide members by guild, To work on guild and servers like worldle bot.  and also public leaderboard.  
+# To-do: divide members by guild, To work on guild and servers like worldle bot and also public leaderboard.  
 
 import discord
 from discord.ext import commands
@@ -10,7 +10,7 @@ from visualization import make_pie_chart, extract_last_three_numbers, convert_to
 from leaderboard import calc_avg_guess, calc_avg_hint, count_game_no, make_leaderboard, get_custom_message
 
 # To do Make global variables so can change name easier i.e. glob_var_name = 'ct_hint_avg'
-glob_var_name = 'ct_hint_avg'
+GLOB_VAR_NAME = 'ct_hint_avg'
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
@@ -45,10 +45,42 @@ def save_user_data():
 user_data = load_user_data()
 
 #MAIN COMMANDS
+bot.synced = False
+
 @bot.event
 async def on_ready():
+    if bot.synced:
+        return
+    
     print(f'Logged in as {bot.user}')
 
+    # Loop through every server (guild) the bot is in
+    for guild in bot.guilds:
+        channel = None
+
+        # Try to use the server's default system channel (if set up)
+        if guild.system_channel and guild.system_channel.permissions_for(guild.me).send_messages:
+            channel = guild.system_channel
+
+        # Find the first text channel the bot can send messages in
+        if channel is None:
+            for text_channel in guild.text_channels:
+                channel = text_channel
+                break
+
+        if channel is not None:
+            try:
+                await channel.send("Hello folks, I'm back online!")
+                print(f"Sent startup message to: {guild.name} -> #{channel.name}")
+            except Exception as e:
+                print(f"Failed to send message in {guild.name}: {e}")
+        else:
+            print(f"Could not find a suitable channel in {guild.name}")
+        pass
+
+    bot.synced = True
+    print("Startup sequence complete.")
+        
 # Flag to track message processing
 processed_messages = set()
 
