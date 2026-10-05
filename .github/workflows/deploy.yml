@@ -1,10 +1,25 @@
-name: Deploy
+name: CI/CD
 
 on:
   push:
+    branches: ["**"]
+  pull_request:
     branches: [main]
+
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r __tests__/requirements-dev.txt
+      - run: pytest __tests__
+
   build-push:
+    needs: test
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -22,6 +37,7 @@ jobs:
   
   deploy:
     needs: build-push
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: SSH into droplet and redeploy
