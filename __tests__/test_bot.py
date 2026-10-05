@@ -6,8 +6,20 @@ import sys
 # Tell Python to look one folder up (the outer folder) for modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+@pytest.fixture(autouse=True)
+def setup_dummy_json_file():
+    # 1. Match the exact folder path your bot code expects
+    os.makedirs("/app/data", exist_ok=True)
+    
+    # 2. Create a dummy json file so open() succeeds naturally
+    file_path = "/app/data/user_data.json"
+    if not os.path.exists(file_path):
+        with open(file_path, "w") as f:
+            f.write('{"dummy": "data"}')
+            
+    yield
+
 @pytest.mark.asyncio
-@patch("builtins.open", new_callable=mock_open, read_data='{"dummy": "data"}')
 @patch("contexto_bot_dc.bot")
 async def test_on_ready_broadcasts_message(mock_bot):
 
