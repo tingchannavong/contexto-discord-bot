@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 import os
 import sys
 
@@ -7,8 +7,10 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 @pytest.mark.asyncio
+@patch("builtins.open", new_callable=mock_open, read_data='{"dummy": "data"}')
 @patch("contexto_bot_dc.bot")
 async def test_on_ready_broadcasts_message(mock_bot):
+
     # Arrange: Set up mock bot states and guilds
     mock_bot.synced = False
     mock_bot.user = "TestBot#1234"
