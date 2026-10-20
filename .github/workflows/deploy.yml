@@ -46,8 +46,9 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USER }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
+          # i might need prune step due to droplet size issue
           script: |
-            cd ./contexto-bot
-            docker compose pull
+            cd ./contexto-bot &&
+            docker compose pull &&
             docker compose up -d
         
